@@ -1,53 +1,61 @@
-# goodbooks-10k
+# Recommender System Project Report
 
-This dataset contains six million ratings for ten thousand most popular (with most ratings) books. There are also:
+## 1. Project Overview & Flow
 
-* books marked to read by the users
-* book metadata (author, year, etc.) 
-* tags/shelves/genres
+This project implements a **Hybrid Recommendation System** for books, combining the strengths of Deep Learning (Neural Collaborative Filtering) and Information Retrieval (Content-Based Filtering).
 
-## Contents
+The end-to-end flow of the system is as follows:
 
-**ratings.csv** contains ratings sorted by time. It is 69MB and looks like that:
+1.  **Data Ingestion**: Loading raw metadata (`books.csv`), user ratings (`ratings.csv`), and descriptive tags (`tags.csv`).
+2.  **Data Cleaning & Preprocessing**:
+    *   Dropping irrelevant columns (image URLs, language codes).
+    *   Merging tag data to create richness for content analysis.
+3.  **Feature Engineering ("Tag Soup")**:
+    *   Aggregating Title, Authors, and Tags into a single text string per book.
+    *   This "soup" represents the semantic content of the item.
+4.  **Model A: Neural Collaborative Filtering (NCF)**:
+    *   **Goal**: Learn user preferences from historical interaction data.
+    *   **Input**: User IDs + Book IDs.
+    *   **Process**: Maps IDs to embeddings, learns non-linear interactions via a neural network, and outputs a probability of "like".
+5.  **Model B: Content-Based Filtering (CBF)**:
+    *   **Goal**: Find books similar to what a user already likes based on metadata.
+    *   **Input**: "Tag Soup" text data.
+    *   **Process**: Converts text to vectors (TF-IDF) and calculates geometric similarity (Cosine).
+6.  **Hybrid Fusion**:
+    *   **Goal**: Combine scores to balance *personalization* (NCF) with *relevance* (CBF).
+    *   **Formula**: $Score_{final} = 0.7 \times NCF + 0.3 \times CBF$.
 
-	user_id,book_id,rating
-	1,258,5
-	2,4081,4
-	2,260,5
-	2,9296,5
-	2,2318,3
-	
-Ratings go from one to five. Both book IDs and user IDs are contiguous. For books, they are 1-10000, for users, 1-53424. 	
+---
 
-**to_read.csv** provides IDs of the books marked "to read" by each user, as _user_id,book_id_ pairs, sorted by time. There are close to a million pairs.
+## 2. Main Concepts
 
-**books.csv** has metadata for each book (goodreads IDs, authors, title, average rating, etc.). The metadata have been extracted from goodreads XML files, available in `books_xml`.
+### A. Implicit Feedback
+Unlike explicit ratings (e.g., "I give this 5 stars"), real-world data often lacks negative feedback. We infer interest:
+*   **Positive (1)**: User rated the book highly (>= 4 stars).
+*   **Negative (0)**: User has *not* interacted with the book (Assumed negative).
 
-**book_tags.csv** contains tags/shelves/genres assigned by users to books. Tags in this file are represented by their IDs. They are sorted by _goodreads_book_id_ ascending and _count_ descending. 
+### B. Negative Sampling
+To train the model to distinguish good from bad, we artificially generate negative examples by pairing users with random books they haven't seen. This prevents the model from just predicting "1" for everything.
 
-In raw XML files, tags look like this:
+### C. The Cold Start Problem
+*   **New Users/Items**: Collaborative filtering fails when there is no history.
+*   **Solution**: We use **Content-Based Filtering** to bridge this gap. A new book has no ratings, but it *does* have a title and tags, allowing us to recommend it immediately if it matches a user's known interests.
 
-	<popular_shelves>
-		<shelf name="science-fiction" count="833"/>
-		<shelf name="fantasy" count="543"/>
-		<shelf name="sci-fi" count="542"/>
-		...
-		<shelf name="for-fun" count="8"/>
-		<shelf name="all-time-favorites" count="8"/>
-		<shelf name="science-fiction-and-fantasy" count="7"/>	
-	</popular_shelves>
+---
 
-Here, each tag/shelf is given an ID. **tags.csv** translates tag IDs to names.
+## 3. Recommendation Techniques Implemented
 
-Some of these files are quite large, so GitHub won't show their contents online. See `samples` for smaller CSV snippets.
+### Neural Collaborative Filtering (NeuMF)
+We use the **NeuMF** architecture, which is state-of-the-art for implicit feedback. It fuses two subnetworks:
+1.  **GMF (Generalized Matrix Factorization)**: A neural interpretation of standard matrix factorization (dot product). It captures linear relationships.
+2.  **MLP (Multi-Layer Perceptron)**: A standard feed-forward deep network. It captures non-linear, complex relationships.
 
-### goodreads IDs
+### TF-IDF (Term Frequency - Inverse Document Frequency)
+A statistical measure used to evaluate how important a word is to a document in a collection.
+*   **TF**: Frequency of a word in a specific book (e.g., "Magic" appears 5 times).
+*   **IDF**: Inverse frequency across *all* books (e.g., "Magic" is rare, so it has high weight; "Book" is common, so it has low weight).
 
-Each book may have many editions.  _goodreads_book_id_ and _best_book_id_ generally point to the most popular edition of a given book, while goodreads  _work_id_ refers to the book in the abstract sense. 
-
-You can use the goodreads book and work IDs to create URLs as follows:
-
-https://www.goodreads.com/book/show/2767052   
-https://www.goodreads.com/work/editions/2792775  
-
-Note that _book_id_ in **ratings.csv** and **to_read.csv** maps to _work_id_, not to _goodreads_book_id_, meaning that ratings for different editions are aggregated.
+### Cosine Similarity
+We measure similarity between two books by calculating the cosine of the angle between their TF-IDF vectors.
+*   **1.0**: Perfect match (Same content).
+*   **0.0**: No overlap.
