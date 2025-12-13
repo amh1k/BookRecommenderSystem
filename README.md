@@ -23,7 +23,7 @@ pip install numpy pandas matplotlib seaborn scikit-learn tensorflow
 2.  Ensure you have the dataset files (`books.csv`, `ratings.csv`, `tags.csv`, `book_tags.csv`) in the project directory.
 3.  Open the notebook:
     ```bash
-    jupyter notebook data-cleaner.ipynb
+    jupyter notebook projectRs.ipynb
     ```
 4.  Run all cells to clean data, train the NCF model, and generate recommendations.
 
