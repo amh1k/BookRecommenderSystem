@@ -111,13 +111,14 @@ graph TD
     T -->|Merge| T_Named
     T_Named -->|Filter Generic| T_Content[Content Tags]
     T_Content -->|Group Top 10| T_Soup[Tag Soup]
-    B_Clean -->|Combine| Content[Content Soup<br>(Title + Author + Tags)]
+    B_Clean -->|Combine| Content[Content Soup\n(Title + Author + Tags)]
     end
 
     subgraph Model Prep
     R -->|Map IDs| R_Mapped[Mapped Ratings]
     R_Mapped -->|Negative Sampling| TrainingData[(User, Book, Target 0/1)]
     end
+
 ```
 
 ### Phase 3: Collaborative Filtering Preparation (NCF)
