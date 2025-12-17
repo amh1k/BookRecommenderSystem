@@ -72,7 +72,7 @@ A list of books users have marked as "Want to Read".
 
 ## 3. Codebase Walkthrough (A to Z)
 
-The core logic resides in `projectRs.ipynb`. Below is the detailed flow of the code.
+The core logic resides in `data-cleaner.ipynb`. Below is the detailed flow of the code.
 
 ### Phase 1: Data Loading and Cleaning
 
@@ -95,6 +95,30 @@ The core logic resides in `projectRs.ipynb`. Below is the detailed flow of the c
     - Book Title.
     - The 10 selected tags.
     - _Result_: A single string like: _"SuzanneCollins TheHungerGames young-adult fiction dystopian..."_
+
+```mermaid
+graph TD
+    subgraph Raw Data
+    B[books.csv]
+    R[ratings.csv]
+    T[tags.csv]
+    BT[book_tags.csv]
+    end
+
+    subgraph Cleaning & Feature Engineering
+    B -->|Drop Columns| B_Clean[Clean Books]
+    BT -->|Merge| T_Named[Tags with Names]
+    T -->|Merge| T_Named
+    T_Named -->|Filter Generic| T_Content[Content Tags]
+    T_Content -->|Group Top 10| T_Soup[Tag Soup]
+    B_Clean -->|Combine| Content[Content Soup<br>(Title + Author + Tags)]
+    end
+
+    subgraph Model Prep
+    R -->|Map IDs| R_Mapped[Mapped Ratings]
+    R_Mapped -->|Negative Sampling| TrainingData[(User, Book, Target 0/1)]
+    end
+```
 
 ### Phase 3: Collaborative Filtering Preparation (NCF)
 
@@ -127,6 +151,30 @@ The model uses the **Neural Matrix Factorization (NeuMF)** architecture:
 
 **Training**: The model is trained using **Binary Cross Entropy** loss for 3 epochs.
 
+```mermaid
+graph TD
+    InputUser[User ID] --> EmbUserGMF[Embedding GMF]
+    InputUser --> EmbUserMLP[Embedding MLP]
+    InputItem[Book ID] --> EmbItemGMF[Embedding GMF]
+    InputItem --> EmbItemMLP[Embedding MLP]
+
+    subgraph GMF Path
+    EmbUserGMF -->|Multiply| GMF_Vec[GMF Vector]
+    EmbItemGMF -->|Multiply| GMF_Vec
+    end
+
+    subgraph MLP Path
+    EmbUserMLP -->|Concat| MLP_Concat[Concatenation]
+    EmbItemMLP -->|Concat| MLP_Concat
+    MLP_Concat -->|Dense| MLP_L1[Layer 1]
+    MLP_L1 -->|Dense| MLP_L2[Layer 2]
+    end
+
+    GMF_Vec -->|Concat| Fusion[Fusion Layer]
+    MLP_L2 -->|Concat| Fusion
+    Fusion -->|Sigmoid| Output[Probability Score]
+```
+
 ### Phase 5: Content-Based Filtering (CBF)
 
 **Goal**: Calculate similarity between books based on text.
@@ -154,6 +202,28 @@ The final function `recommend_hybrid` performs these steps for a target User `U`
     - `Hybrid_Score = (Weight_NCF * NCF_Score) + (Weight_CBF * CBF_Score)`
     - Typical weights: 0.7 for NCF (Taste) and 0.3 for CBF (Content).
 5.  **Ranking**: The books are sorted by `Hybrid_Score`, and the top 10 are returned.
+
+```mermaid
+graph TD
+    User([User]) -->|Get ID| ModelNCF[NCF Model]
+    User -->|Get Favorites| UserFavs[User Favorites]
+
+    Candidates[Candidate Books<br>(Unread)] -->|Input| ModelNCF
+    Candidates -->|Input| CBF_Calc[CBF Calculator]
+
+    ModelNCF -->|Predict| ScoreNCF[NCF Score<br>(Taste)]
+
+    UserFavs -->|Compare Vectors| CBF_Calc
+    CBF_Calc -->|Avg Cosine Sim| ScoreCBF[CBF Score<br>(Relevance)]
+
+    ScoreNCF -->|x 0.7| WeightedNCF
+    ScoreCBF -->|x 0.3| WeightedCBF
+
+    WeightedNCF -->|Sum| FinalScore[Hybrid Score]
+    WeightedCBF -->|Sum| FinalScore
+
+    FinalScore -->|Sort| Recommendations[Top 10 Books]
+```
 
 ---
 
