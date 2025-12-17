@@ -1,3 +1,9 @@
+# Book Recommender System
+
+The purpose of this project is to explore how recommendation systems work by suggesting relevant books based on user interests.
+Created by Muhammad Moiz Hussain (23K-0553) & Muhammad Hassan Khan (23K-0565).
+
+
 ## 🛠️ Dependencies & Installation
 
 To run this project, you need the following libraries:
@@ -98,3 +104,5 @@ We measure similarity between two books by calculating the cosine of the angle b
 
 - **1.0**: Perfect match (Same content).
 - **0.0**: No overlap.
+
+
