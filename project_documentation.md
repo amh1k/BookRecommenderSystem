@@ -72,7 +72,7 @@ A list of books users have marked as "Want to Read".
 
 ## 3. Codebase Walkthrough (A to Z)
 
-The core logic resides in `data-cleaner.ipynb`. Below is the detailed flow of the code.
+The core logic resides in `projectRs.ipynb`. Below is the detailed flow of the code.
 
 ### Phase 1: Data Loading and Cleaning
 
