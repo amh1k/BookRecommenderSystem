@@ -210,13 +210,13 @@ graph TD
     User([User]) -->|Get ID| ModelNCF[NCF Model]
     User -->|Get Favorites| UserFavs[User Favorites]
 
-    Candidates[Candidate Books<br>(Unread)] -->|Input| ModelNCF
+    Candidates["Candidate Books\n(Unread)"] -->|Input| ModelNCF
     Candidates -->|Input| CBF_Calc[CBF Calculator]
 
-    ModelNCF -->|Predict| ScoreNCF[NCF Score<br>(Taste)]
+    ModelNCF -->|Predict| ScoreNCF["NCF Score\n(Taste)"]
 
     UserFavs -->|Compare Vectors| CBF_Calc
-    CBF_Calc -->|Avg Cosine Sim| ScoreCBF[CBF Score<br>(Relevance)]
+    CBF_Calc -->|Avg Cosine Sim| ScoreCBF["CBF Score\n(Relevance)"]
 
     ScoreNCF -->|x 0.7| WeightedNCF
     ScoreCBF -->|x 0.3| WeightedCBF
@@ -225,6 +225,7 @@ graph TD
     WeightedCBF -->|Sum| FinalScore
 
     FinalScore -->|Sort| Recommendations[Top 10 Books]
+
 ```
 
 ---
